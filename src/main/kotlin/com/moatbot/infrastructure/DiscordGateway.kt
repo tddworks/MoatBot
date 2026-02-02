@@ -10,26 +10,39 @@ import com.moatbot.infrastructure.messaging.discord.SlashCommandHandler
 import org.slf4j.LoggerFactory
 
 /**
- * Slash command handler for Discord that uses Moatbot.
- * Extracted to break circular dependency between DiscordClient and DiscordGateway.
+ * Command handler for Discord that uses Moatbot.
+ * Handles both slash commands and text-based commands.
+ * Extracted to break circular dependency and improve testability.
  */
 class DiscordSlashCommandHandler(private val moatbot: Moatbot) : SlashCommandHandler {
     private val logger = LoggerFactory.getLogger(DiscordSlashCommandHandler::class.java)
 
+    private val commands = listOf("/new", "/clear", "/help", "/status")
+
+    /**
+     * Check if the content is a command.
+     */
+    fun isCommand(content: String): Boolean {
+        val trimmed = content.trim().lowercase()
+        return commands.any { trimmed.startsWith(it) }
+    }
+
     override suspend fun handleCommand(command: String, userId: UserId, chatId: ChatId): String {
         val key = SessionKey.from(userId, chatId)
-        return when (command.lowercase()) {
-            "/new" -> {
+        val trimmed = command.trim().lowercase()
+
+        return when {
+            trimmed.startsWith("/new") -> {
                 moatbot.clear(key)
                 logger.info("New session started: $key")
                 "✅ New session started"
             }
-            "/clear" -> {
+            trimmed.startsWith("/clear") -> {
                 moatbot.clear(key)
                 logger.info("Session cleared: $key")
                 "Session cleared. Starting fresh!"
             }
-            "/help" -> """
+            trimmed.startsWith("/help") -> """
                 **MoatBot Commands:**
                 `/new` - Start a new session
                 `/clear` - Clear conversation history and start fresh
@@ -38,7 +51,7 @@ class DiscordSlashCommandHandler(private val moatbot: Moatbot) : SlashCommandHan
 
                 Just type normally to chat with Claude!
             """.trimIndent()
-            "/status" -> {
+            trimmed.startsWith("/status") -> {
                 val status = moatbot.status(key)
                 if (status == null) {
                     "No active session. Send a message to start!"
@@ -61,17 +74,10 @@ class DiscordSlashCommandHandler(private val moatbot: Moatbot) : SlashCommandHan
  */
 class DiscordGateway(
     private val moatbot: Moatbot,
-    private val client: MessageClient
+    private val client: MessageClient,
+    private val commandHandler: DiscordSlashCommandHandler = DiscordSlashCommandHandler(moatbot)
 ) {
     private val logger = LoggerFactory.getLogger(DiscordGateway::class.java)
-
-    // Command handlers for text-based commands (fallback)
-    private val commands = mapOf<String, suspend (SessionKey, String) -> String>(
-        "/clear" to ::handleClearCommand,
-        "/new" to ::handleNewCommand,
-        "/help" to ::handleHelpCommand,
-        "/status" to ::handleStatusCommand
-    )
 
     suspend fun start() {
         logger.info("DiscordGateway starting...")
@@ -79,14 +85,11 @@ class DiscordGateway(
 
         client.messages().collect { incoming ->
             try {
-                val key = SessionKey.from(incoming.userId, incoming.chatId)
                 val content = incoming.content.trim()
 
-                // Check for commands first
-                val command = commands.keys.firstOrNull { content.lowercase().startsWith(it) }
-                if (command != null) {
-                    val args = content.drop(command.length).trim()
-                    val response = commands[command]!!.invoke(key, args)
+                // Check for commands first (text-based fallback for slash commands)
+                if (commandHandler.isCommand(content)) {
+                    val response = commandHandler.handleCommand(content, incoming.userId, incoming.chatId)
                     client.sendMessage(incoming.chatId, response)
                     return@collect
                 }
@@ -95,6 +98,7 @@ class DiscordGateway(
                 client.sendTypingIndicator(incoming.chatId)
 
                 // Collect response from Moatbot
+                val key = SessionKey.from(incoming.userId, incoming.chatId)
                 val response = StringBuilder()
 
                 moatbot.chat(key, incoming.userId, content).collect { event ->
@@ -127,41 +131,5 @@ class DiscordGateway(
     suspend fun stop() {
         logger.info("DiscordGateway stopping...")
         client.stop()
-    }
-
-    private suspend fun handleClearCommand(key: SessionKey, args: String): String {
-        moatbot.clear(key)
-        logger.info("Session cleared: $key")
-        return "Session cleared. Starting fresh!"
-    }
-
-    private suspend fun handleNewCommand(key: SessionKey, args: String): String {
-        moatbot.clear(key)
-        logger.info("New session started: $key")
-        return "✅ New session started"
-    }
-
-    private suspend fun handleHelpCommand(key: SessionKey, args: String): String {
-        return """
-            **MoatBot Commands:**
-            `/new` - Start a new session
-            `/clear` - Clear conversation history and start fresh
-            `/status` - Show current session info
-            `/help` - Show this help message
-
-            Just type normally to chat with Claude!
-        """.trimIndent()
-    }
-
-    private suspend fun handleStatusCommand(key: SessionKey, args: String): String {
-        val status = moatbot.status(key)
-            ?: return "No active session. Send a message to start!"
-
-        return """
-            **Session Status:**
-            - Messages: ${status.messageCount}
-            - AI Session: ${status.aiSessionId?.take(20) ?: "none"}...
-            - Created: ${status.createdAt}
-        """.trimIndent()
     }
 }

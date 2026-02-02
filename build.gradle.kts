@@ -38,6 +38,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.mockito:mockito-core:5.21.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
 }
 
 tasks.test {
