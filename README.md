@@ -85,6 +85,8 @@ java -jar build/libs/moatbot-kotlin-0.1.0-SNAPSHOT-all.jar --acp
 
 ## Architecture
 
+For detailed design, see [docs/design.md](docs/design.md).
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Your Platform                         │

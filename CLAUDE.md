@@ -89,6 +89,8 @@ src/test/kotlin/com/moatbot/
 
 MoatBot connects Claude CLI to messaging platforms (Discord, Telegram) and IDEs (via ACP).
 
+For detailed design, see [docs/design.md](docs/design.md).
+
 ### Package Structure
 
 ```
