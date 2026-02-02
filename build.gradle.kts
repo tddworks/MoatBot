@@ -1,8 +1,9 @@
 plugins {
-    kotlin("jvm") version "2.3.0"
-    kotlin("plugin.serialization") version "2.3.0"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.kover)
     application
-    id("com.gradleup.shadow") version "9.0.0-beta4"
 }
 
 group = "com.moatbot"
@@ -15,30 +16,26 @@ repositories {
 
 dependencies {
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation(libs.kotlinx.coroutines.core)
 
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation(libs.kotlinx.serialization.json)
 
     // Telegram (tgbotapi)
-    implementation("dev.inmo:tgbotapi:30.0.2")
+    implementation(libs.tgbotapi)
 
     // Discord (Kord)
-    implementation("dev.kord:kord-core:0.17.0")
+    implementation(libs.kord.core)
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.16")
-    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation(libs.bundles.logging)
 
     // ACP (Agent Client Protocol)
-    implementation("com.agentclientprotocol:acp:0.15.2")
+    implementation(libs.acp)
 
     // Testing
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.mockito:mockito-core:5.21.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
-    testImplementation("app.cash.turbine:turbine:1.2.1")
+    testImplementation(libs.bundles.testing)
 }
 
 tasks.test {
@@ -56,5 +53,19 @@ application {
 tasks.jar {
     manifest {
         attributes["Main-Class"] = "com.moatbot.MainKt"
+    }
+}
+
+// Kover configuration for code coverage
+kover {
+    reports {
+        total {
+            xml {
+                onCheck = true
+            }
+            html {
+                onCheck = true
+            }
+        }
     }
 }

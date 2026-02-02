@@ -17,6 +17,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run a single test method
 ./gradlew test --tests "com.moatbot.domain.ConversationTest.testReceive"
 
+# Code coverage (Kover)
+./gradlew koverHtmlReport    # HTML report at build/reports/kover/html/
+./gradlew koverXmlReport     # XML report for CI integration
+
 # Run with Discord/Telegram
 DISCORD_BOT_TOKEN="..." ./gradlew run
 TELEGRAM_BOT_TOKEN="..." ./gradlew run
@@ -174,10 +178,13 @@ Environment variables:
 
 ## Build Configuration
 
+Dependencies are managed via Gradle Version Catalog (`gradle/libs.versions.toml`).
+
 - **Kotlin**: 2.3.0 (JVM target: Java 21)
 - **Coroutines**: kotlinx-coroutines 1.10.2
 - **Serialization**: kotlinx-serialization-json 1.8.1
 - **Discord**: Kord 0.17.0
 - **Telegram**: tgbotapi 30.0.2
 - **ACP**: 0.15.2
-- **Testing**: kotlin-test, mockito-kotlin, kotlinx-coroutines-test
+- **Testing**: kotlin-test, mockito-kotlin, turbine, kotlinx-coroutines-test
+- **Coverage**: Kover 0.9.1
