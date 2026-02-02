@@ -21,6 +21,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew koverHtmlReport    # HTML report at build/reports/kover/html/
 ./gradlew koverXmlReport     # XML report for CI integration
 
+# Update dependencies
+./gradlew versionCatalogUpdate  # Check for dependency updates
+
 # Run with Discord/Telegram
 DISCORD_BOT_TOKEN="..." ./gradlew run
 TELEGRAM_BOT_TOKEN="..." ./gradlew run

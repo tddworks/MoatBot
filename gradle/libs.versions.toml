@@ -24,6 +24,7 @@ turbine = "1.2.1"
 # Plugins
 shadow = "9.0.0-beta4"
 kover = "0.9.1"
+version-catalog-update = "1.0.1"
 
 [libraries]
 # Coroutines
@@ -60,3 +61,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }

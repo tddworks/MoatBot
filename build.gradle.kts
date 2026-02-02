@@ -1,8 +1,11 @@
+import nl.littlerobots.vcu.plugin.resolver.VersionSelectors
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.shadow)
     alias(libs.plugins.kover)
+    alias(libs.plugins.version.catalog.update)
     application
 }
 
@@ -37,6 +40,8 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.bundles.testing)
 }
+
+versionCatalogUpdate { versionSelector(VersionSelectors.STABLE) }
 
 tasks.test {
     useJUnitPlatform()
