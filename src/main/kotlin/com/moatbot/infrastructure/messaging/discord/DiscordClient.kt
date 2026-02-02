@@ -1,8 +1,8 @@
 package com.moatbot.infrastructure.messaging.discord
 
-import com.moatbot.application.port.IncomingMessage
-import com.moatbot.application.port.MessageClient
-import com.moatbot.application.port.Platform
+import com.moatbot.domain.IncomingMessage
+import com.moatbot.domain.MessageClient
+import com.moatbot.domain.Platform
 import com.moatbot.domain.ChatId
 import com.moatbot.domain.UserId
 import dev.kord.common.entity.Snowflake
@@ -11,7 +11,6 @@ import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.on
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
-import dev.kord.rest.builder.message.modify.MessageModifyBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow

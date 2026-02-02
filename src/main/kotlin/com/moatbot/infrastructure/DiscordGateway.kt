@@ -1,10 +1,9 @@
 package com.moatbot.infrastructure
 
 import com.moatbot.app.Moatbot
-import com.moatbot.application.port.MessageClient
+import com.moatbot.domain.MessageClient
 import com.moatbot.domain.ResponseEvent
 import com.moatbot.domain.SessionKey
-import com.moatbot.domain.UserId
 import org.slf4j.LoggerFactory
 
 /**

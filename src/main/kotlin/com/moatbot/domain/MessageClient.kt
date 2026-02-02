@@ -1,7 +1,5 @@
-package com.moatbot.application.port
+package com.moatbot.domain
 
-import com.moatbot.domain.ChatId
-import com.moatbot.domain.UserId
 import kotlinx.coroutines.flow.Flow
 
 data class IncomingMessage(
