@@ -7,6 +7,7 @@ import com.moatbot.app.Moatbot
 import com.moatbot.infrastructure.AcpAgent
 import com.moatbot.infrastructure.ClaudeCli
 import com.moatbot.infrastructure.DiscordGateway
+import com.moatbot.infrastructure.DiscordSlashCommandHandler
 import com.moatbot.infrastructure.FileConversationRepository
 import com.moatbot.infrastructure.LocalToolRunner
 import com.moatbot.infrastructure.MemoryConversationRepository
@@ -89,7 +90,8 @@ private suspend fun runMessagingGateways() = coroutineScope {
 
     config.discordToken?.let { token ->
         logger.info("Discord bot enabled")
-        val client = DiscordClient(token)
+        val slashHandler = DiscordSlashCommandHandler(moatbot)
+        val client = DiscordClient(token, slashCommandHandler = slashHandler)
         val gateway = DiscordGateway(moatbot, client)
         gateways.add { gateway.start() }
     }

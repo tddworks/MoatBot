@@ -7,6 +7,9 @@ import com.moatbot.domain.ChatId
 import com.moatbot.domain.UserId
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
+import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
+import dev.kord.core.event.interaction.GlobalChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.on
 import dev.kord.gateway.Intent
@@ -20,9 +23,17 @@ import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Handler for Discord slash commands.
+ */
+fun interface SlashCommandHandler {
+    suspend fun handleCommand(command: String, userId: UserId, chatId: ChatId): String
+}
+
 class DiscordClient(
     private val token: String,
-    private val debounceMs: Long = 2000  // Batch messages within 2 seconds
+    private val debounceMs: Long = 2000,  // Batch messages within 2 seconds
+    private val slashCommandHandler: SlashCommandHandler? = null
 ) : MessageClient {
 
     private val logger = LoggerFactory.getLogger(DiscordClient::class.java)
@@ -150,6 +161,31 @@ class DiscordClient(
 
         kord = Kord(token)
 
+        // Register slash commands
+        registerSlashCommands()
+
+        // Handle slash commands in guilds (servers)
+        kord?.on<GuildChatInputCommandInteractionCreateEvent> {
+            handleSlashCommand(
+                commandName = interaction.command.rootName,
+                userId = UserId(interaction.user.id.toString()),
+                chatId = ChatId(interaction.channelId.toString()),
+                deferResponse = { interaction.deferPublicResponse() },
+                respond = { response, deferredResponse -> deferredResponse.respond { content = response } }
+            )
+        }
+
+        // Handle slash commands in DMs
+        kord?.on<GlobalChatInputCommandInteractionCreateEvent> {
+            handleSlashCommand(
+                commandName = interaction.command.rootName,
+                userId = UserId(interaction.user.id.toString()),
+                chatId = ChatId(interaction.channelId.toString()),
+                deferResponse = { interaction.deferPublicResponse() },
+                respond = { response, deferredResponse -> deferredResponse.respond { content = response } }
+            )
+        }
+
         kord?.on<MessageCreateEvent> {
             // Ignore bot messages
             if (message.author?.isBot == true) return@on
@@ -188,6 +224,39 @@ class DiscordClient(
         }
 
         logger.info("Discord bot started")
+    }
+
+    private suspend fun registerSlashCommands() {
+        logger.info("Registering slash commands...")
+        kord?.createGlobalChatInputCommand("new", "Start a new conversation session")
+        kord?.createGlobalChatInputCommand("clear", "Clear conversation history")
+        kord?.createGlobalChatInputCommand("status", "Show current session status")
+        kord?.createGlobalChatInputCommand("help", "Show help message")
+        logger.info("Slash commands registered")
+    }
+
+    private suspend fun <T> handleSlashCommand(
+        commandName: String,
+        userId: UserId,
+        chatId: ChatId,
+        deferResponse: suspend () -> T,
+        respond: suspend (String, T) -> Unit
+    ) {
+        val deferred = deferResponse()
+
+        val handler = slashCommandHandler
+        if (handler == null) {
+            respond("Command handler not configured", deferred)
+            return
+        }
+
+        try {
+            val response = handler.handleCommand("/$commandName", userId, chatId)
+            respond(response, deferred)
+        } catch (e: Exception) {
+            logger.error("Error handling slash command /$commandName", e)
+            respond("Error: ${e.message}", deferred)
+        }
     }
 
     private suspend fun debounceMessage(userId: UserId, chatId: ChatId, content: String) {

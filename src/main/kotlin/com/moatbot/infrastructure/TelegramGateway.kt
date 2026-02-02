@@ -18,6 +18,7 @@ class TelegramGateway(
     // Command handlers
     private val commands = mapOf<String, suspend (SessionKey, String) -> String>(
         "/clear" to ::handleClearCommand,
+        "/new" to ::handleNewCommand,
         "/help" to ::handleHelpCommand,
         "/status" to ::handleStatusCommand,
         "/start" to ::handleStartCommand
@@ -86,6 +87,7 @@ class TelegramGateway(
             I'm an AI assistant powered by Claude. Just send me a message to chat!
 
             Commands:
+            /new - Start a new session
             /clear - Clear conversation history
             /status - Show session info
             /help - Show help
@@ -98,9 +100,16 @@ class TelegramGateway(
         return "Session cleared. Starting fresh!"
     }
 
+    private suspend fun handleNewCommand(key: SessionKey, args: String): String {
+        moatbot.clear(key)
+        logger.info("New session started: $key")
+        return "✅ New session started"
+    }
+
     private suspend fun handleHelpCommand(key: SessionKey, args: String): String {
         return """
             MoatBot Commands:
+            /new - Start a new session
             /clear - Clear conversation history and start fresh
             /status - Show current session info
             /help - Show this help message
