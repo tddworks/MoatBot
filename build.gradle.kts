@@ -70,7 +70,8 @@ kover {
                 classes(
                     // External library wrappers (thin adapters with direct 3rd party API calls)
                     "com.moatbot.infrastructure.messaging.discord.DiscordClient",
-                    "com.moatbot.infrastructure.messaging.telegram.TelegramClient",
+                    "com.moatbot.infrastructure.messaging.discord.DiscordClient$*",  // Inner classes
+                    "com.moatbot.infrastructure.messaging.telegram.*",  // All telegram client classes
                     "com.moatbot.infrastructure.ClaudeCli",
                     // Entry point and configuration
                     "com.moatbot.MainKt",
