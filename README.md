@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-purple.svg)](https://kotlinlang.org/)
 
-MoatBot is an open-source AI assistant that connects [Claude](https://claude.ai) to your favorite platforms. Chat with Claude through Discord, Telegram, or your IDE.
+MoatBot is your secure gateway to Claude AI [Claude](https://claude.ai). Like a castle moat protects what's inside, MoatBot keeps your AI conversations private and under your control—accessible only through your own Discord, Telegram, or IDE.
 
 ## Features
 
