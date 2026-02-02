@@ -30,6 +30,62 @@ fun interface SlashCommandHandler {
     suspend fun handleCommand(command: String, userId: UserId, chatId: ChatId): String
 }
 
+/**
+ * Utility functions for Discord message processing.
+ * Extracted for testability.
+ */
+object DiscordMessageUtils {
+    /**
+     * Strips Discord mentions from message content.
+     * Removes: <@123> (user), <@!123> (nickname), <@&123> (role), <#123> (channel)
+     */
+    fun stripMentions(content: String): String {
+        return content
+            .replace(Regex("<@!?\\d+>"), "")     // User mentions
+            .replace(Regex("<@&\\d+>"), "")      // Role mentions
+            .replace(Regex("<#\\d+>"), "")       // Channel mentions
+            .trim()
+    }
+
+    /**
+     * Split message into chunks that fit Discord's 2000 character limit.
+     * Tries to split at newlines for cleaner output.
+     */
+    fun splitMessage(content: String, maxLength: Int = 1900): List<String> {
+        if (content.length <= maxLength) {
+            return listOf(content)
+        }
+
+        val chunks = mutableListOf<String>()
+        var remaining = content
+
+        while (remaining.isNotEmpty()) {
+            if (remaining.length <= maxLength) {
+                chunks.add(remaining)
+                break
+            }
+
+            // Try to find a good split point (newline) within the limit
+            var splitIndex = remaining.lastIndexOf('\n', maxLength)
+
+            // If no newline found, try space
+            if (splitIndex <= 0) {
+                splitIndex = remaining.lastIndexOf(' ', maxLength)
+            }
+
+            // If still no good split point, just cut at maxLength
+            if (splitIndex <= 0) {
+                splitIndex = maxLength
+            }
+
+            chunks.add(remaining.substring(0, splitIndex))
+            remaining = remaining.substring(splitIndex).trimStart()
+        }
+
+        return chunks
+    }
+}
+
 class DiscordClient(
     private val token: String,
     private val debounceMs: Long = 2000,  // Batch messages within 2 seconds
@@ -62,7 +118,7 @@ class DiscordClient(
         val channelId = Snowflake(chatId.value)
 
         // Split long messages into chunks (Discord limit is 2000 chars)
-        val chunks = splitMessage(content, 1900)  // Leave room for formatting
+        val chunks = DiscordMessageUtils.splitMessage(content, 1900)  // Leave room for formatting
 
         for (chunk in chunks) {
             kord?.rest?.channel?.createMessage(channelId) {
@@ -196,7 +252,7 @@ class DiscordClient(
             val author = message.author ?: return@on
 
             // Strip Discord mentions (user, role, channel) from the message
-            val content = stripDiscordMentions(rawContent)
+            val content = DiscordMessageUtils.stripMentions(rawContent)
             if (content.isBlank()) return@on  // Ignore messages that are only mentions
 
             val userId = UserId(author.id.toString())
@@ -314,55 +370,5 @@ class DiscordClient(
         kord?.shutdown()
         loginJob?.cancel()
         scope.cancel()
-    }
-
-    /**
-     * Strips Discord mentions from message content.
-     * Removes: <@123> (user), <@!123> (nickname), <@&123> (role), <#123> (channel)
-     */
-    private fun stripDiscordMentions(content: String): String {
-        return content
-            .replace(Regex("<@!?\\d+>"), "")     // User mentions
-            .replace(Regex("<@&\\d+>"), "")      // Role mentions
-            .replace(Regex("<#\\d+>"), "")       // Channel mentions
-            .trim()
-    }
-
-    /**
-     * Split message into chunks that fit Discord's 2000 character limit.
-     * Tries to split at newlines for cleaner output.
-     */
-    private fun splitMessage(content: String, maxLength: Int = 1900): List<String> {
-        if (content.length <= maxLength) {
-            return listOf(content)
-        }
-
-        val chunks = mutableListOf<String>()
-        var remaining = content
-
-        while (remaining.isNotEmpty()) {
-            if (remaining.length <= maxLength) {
-                chunks.add(remaining)
-                break
-            }
-
-            // Try to find a good split point (newline) within the limit
-            var splitIndex = remaining.lastIndexOf('\n', maxLength)
-
-            // If no newline found, try space
-            if (splitIndex <= 0) {
-                splitIndex = remaining.lastIndexOf(' ', maxLength)
-            }
-
-            // If still no good split point, just cut at maxLength
-            if (splitIndex <= 0) {
-                splitIndex = maxLength
-            }
-
-            chunks.add(remaining.substring(0, splitIndex))
-            remaining = remaining.substring(splitIndex).trimStart()
-        }
-
-        return chunks
     }
 }
