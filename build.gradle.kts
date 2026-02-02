@@ -64,6 +64,20 @@ tasks.jar {
 // Kover configuration for code coverage
 kover {
     reports {
+        // Exclude external library wrappers and entry points from coverage
+        filters {
+            excludes {
+                classes(
+                    // External library wrappers (thin adapters with direct 3rd party API calls)
+                    "com.moatbot.infrastructure.messaging.discord.DiscordClient",
+                    "com.moatbot.infrastructure.messaging.telegram.TelegramClient",
+                    "com.moatbot.infrastructure.ClaudeCli",
+                    // Entry point and configuration
+                    "com.moatbot.MainKt",
+                    "com.moatbot.Config",
+                )
+            }
+        }
         total {
             xml {
                 onCheck = true
